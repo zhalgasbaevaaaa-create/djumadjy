@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ТҮРКІ ДӘУІРІ — JUMANJI · VI–XII ғғ.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🟢</text></svg>">
+</head>
+<body>
+
+<!-- Портреттік бағытта ескерту -->
+<div id="rotateHint">
+  <div class="ph">📱</div>
+  <div>Ойын 16:9 форматқа арналған.<br>Құрылғыны көлденең (горизонталь) бұрыңыз.</div>
+</div>
+
+<!-- ================= ЗАСТАВКА ================= -->
+<div id="splash">
+  <div class="bg"></div>
+  <div class="splash-content">
+    <div class="orna">♢ ✦ ♢ ✦ ♢</div>
+    <h1 class="splash-title"><span class="l1">ҚАЗАҚ ЖЕРІНДЕГІ</span><span class="l2">ТҮРКІ ДӘУІРІ</span></h1>
+    <div class="splash-era">VI–XII ҒАСЫРЛАР</div>
+    <div class="splash-tag">6 команда • 5 өмір • 1 жеңімпаз</div>
+    <div class="orna flip">♢ ✦ ♢ ✦ ♢</div>
+    <br>
+    <button id="btnStart" class="btn btn--big btn--gold">▶ ОЙЫНДЫ БАСТАУ</button>
+    <div id="splashError" style="margin-top:16px;color:#ffb4a2;font-size:14px;display:none;"></div>
+  </div>
+</div>
+
+<!-- ================= ОЙЫН ================= -->
+<div id="app" class="hidden">
+
+  <!-- Жоғарғы қатар -->
+  <div id="topbar">
+    <div id="gameTitle">ТҮРКІ ДӘУІРІ — VI–XII ҒҒ.<span class="sub">ҚАЗАҚ ЖЕРІНДЕГІ ТҮРКІ ДӘУІРІ</span></div>
+    <div class="top-actions">
+      <button id="soundBtn" class="btn btn--icon btn--ghost" title="Дыбысты қосу/өшіру">🔊</button>
+      <button id="fullscreenBtn" class="btn btn--icon btn--ghost" title="Толық экран">⛶</button>
+      <button id="restartTop" class="btn btn--icon btn--ghost" title="Қайта бастау">↻</button>
+    </div>
+  </div>
+
+  <!-- Тақта -->
+  <div class="frame">
+    <div id="board">
+      <div id="segLayer"></div>
+      <div id="dangerFlash"></div>
+
+      <!-- Орталық жасыл шар -->
+      <div id="orb">
+        <div class="orb-ring"></div>
+        <div class="orb-title">ТҮРКІ ДӘУІРІ</div>
+        <div class="orb-sub">VI–XII ғасырлар</div>
+      </div>
+
+      <!-- Сұрақ панелі (шардың үстінде) -->
+      <div id="qPanel">
+        <div id="qCellLabel">7-КЛЕТКА</div>
+        <div id="qTag" class="q-tag">СҰРАҚ</div>
+        <div id="qText">…</div>
+        <div id="dangerArea" class="hidden">
+          <div id="timerBig" class="hidden">20</div>
+          <div id="dangerSteps" style="font-weight:800;color:#ffe9c4;font-size:clamp(15px, calc(var(--s)*.018), 23px);"></div>
+        </div>
+        <div id="answerBox" class="hidden">
+          <span class="lbl">ЖАУАБЫ</span>
+          <span class="answer-text">…</span>
+        </div>
+        <div class="q-btns">
+          <button id="btnReveal" class="btn btn--big btn--gold">👁 ЖАУАБЫ</button>
+          <button id="btnCorrect" class="btn btn--big btn--green hidden">✅ ДҰРЫС</button>
+          <button id="btnWrong" class="btn btn--big btn--red hidden">❌ БҰРЫС</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Командалар өмірлері -->
+  <div id="teamsBar"></div>
+
+  <!-- Кубик + басқару -->
+  <div id="controlBar">
+    <button id="rollBtn" class="btn btn--big btn--gold" disabled>🎲 КУБИКТІ ЛАҚТЫР</button>
+    <div class="dice-wrap">
+      <div class="die3d">
+        <div class="die-inner" id="dieInner">
+          <div class="die-face" data-f="1"><i></i></div>
+          <div class="die-face" data-f="2"><i></i><i></i></div>
+          <div class="die-face" data-f="3"><i></i><i></i><i></i></div>
+          <div class="die-face" data-f="4"><i></i><i></i><i></i><i></i></div>
+          <div class="die-face" data-f="5"><i></i><i></i><i></i><i></i><i></i></div>
+          <div class="die-face" data-f="6"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        </div>
+      </div>
+      <div id="diceResult"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Хабарламалар -->
+<div id="banner"></div>
+<div id="lifeToast"></div>
+
+<!-- Жеңіс экраны -->
+<div id="winScreen" class="hidden">
+  <div class="win-card">
+    <div class="win-cup">🏆</div>
+    <div class="win-title">ЖЕҢІМПАЗ!</div>
+    <div class="win-fig" id="winFig">🐺</div>
+    <div class="win-team" id="winTeamName">1-КОМАНДА</div>
+    <div class="win-sub">«ТҮРКІ ДӘУІРІНІҢ ЖЕҢІМПАЗЫ»</div>
+    <div class="win-meta">
+      <div class="m">❤️ Қалған өмір: <span id="winLives">5</span></div>
+      <div class="m">📍 Жеткен клетка: <span id="winPos">ФИНАЛ</span></div>
+    </div>
+    <div class="statgrid" id="winStats"></div>
+    <button id="btnRestartWin" class="btn btn--big btn--gold" style="margin-top:.6em;">🔄 ҚАЙТА ОЙНАУ</button>
+  </div>
+</div>
+
+<!-- Растау терезесі -->
+<div id="confirmModal" class="hidden">
+  <div class="confirm-box">
+    <div style="font-size:44px;">⚠️</div>
+    <h3>ОЙЫНДЫ ҚАЙТА БАСТАУ?</h3>
+    <div style="color:#cfe9d8;font-weight:600;">Барлық командалар START-қа қайтады,<br>өмірлер 5-ке қалпына келеді.</div>
+    <div class="confirm-actions">
+      <button id="btnConfirmYes" class="btn btn--green">✅ ИӘ, қайта бастау</button>
+      <button id="btnConfirmNo" class="btn btn--red">❌ ЖОҚ</button>
+    </div>
+  </div>
+</div>
+
+<div id="versionTag">«ТҮРКІ ДӘУІРІ — JUMANJI» · Қазақстан тарихы · VI–XII ғғ.</div>
+
+<script src="js/data.js"></script>
+<script src="js/sounds.js"></script>
+<script src="js/game.js"></script>
+<noscript><div style="color:#fff;padding:2em;">Ойынды іске қосу үшін JavaScript қосыңыз.</div></noscript>
+</body>
+</html>
