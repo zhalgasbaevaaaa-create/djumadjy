@@ -32,7 +32,6 @@ const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-let els = {};
 let pathPx = [];        // әр нүктенің px координаты
 let figures = {};       // teamId -> .fig элементі
 let cellEls = [];       // idx -> cell элементі
@@ -322,7 +321,14 @@ function pickByDiff(pool, position){
 
 function pickQuestion(type){
   // type: 'normal'|'special'|'danger'|'culture'|'history'
-  if (!gameState.questionPool.length) refillPool();
+  if (!gameState.questionPool.length){
+    refillPool();
+    // Барлық сұрақ қолданылып болса — база қайта араластырылады (spec #25)
+    if (!gameState.questionPool.length){
+      gameState.usedQuestions = [];
+      refillPool();
+    }
+  }
 
   let allowed;
   if (type === "danger"){
@@ -333,6 +339,10 @@ function pickQuestion(type){
     }
   } else if (type === "special"){
     allowed = gameState.questionPool.filter(q => q.type === "special");
+    // ерекше сұрақтар таусылса — қайта араластыр
+    if (!allowed.length){
+      allowed = shuffle(QUESTIONS.filter(q => q.type === "special"));
+    }
   } else {
     allowed = gameState.questionPool.filter(q => q.type === "normal" || q.type === type);
   }
@@ -454,7 +464,7 @@ async function rollDice(){
 
   inner.classList.remove("rolling");
   setCube(result);
-  setDiceShown(`\uD83C\uDFB2 ${result}<span class="cells-ahead">${result} КЛЕТКА АЛҒА</span>`);
+  setDiceShown(`\uD83C\uDFB2 <b>${result}</b><span class="cells-ahead">${result} КЛЕТКА АЛҒА</span>`);
   snd("hop");
 
   await sleep(400);
@@ -510,7 +520,13 @@ async function onLand(team){
 
   // сұрақ таңдау
   const q = pickQuestion(type);
-  if (!q){ cell.classList.remove("flash"); gameState.busy = false; nextTeam(); announceTurn(); return; }
+  if (!q){
+    cell.classList.remove("flash");
+    gameState.busy = false;
+    nextTeam();
+    announceTurn();
+    return;
+  }
 
   gameState.currentCell = idx;
   gameState.currentCellType = type;
@@ -532,6 +548,7 @@ function showNormalQuestion(q, idx, cellType){
   $("#btnReveal").classList.remove("hidden");
   $("#btnCorrect").classList.add("hidden");
   $("#btnWrong").classList.add("hidden");
+  $("#btnSkip").classList.add("hidden");
   $("#dangerArea").classList.add("hidden");
   $("#timerBig").classList.add("hidden");
   panel.classList.add("show");
@@ -555,6 +572,7 @@ function showDangerTask(q, idx){
   $("#btnReveal").classList.add("hidden"); // қауіптіде жауап btn жоқ
   $("#btnCorrect").classList.remove("hidden");
   $("#btnWrong").classList.remove("hidden");
+  $("#btnSkip").classList.remove("hidden"); // мұғалім өткізіп жібере алады
   panel.classList.add("show");
   $("#orb").classList.add("big");
 
@@ -588,12 +606,29 @@ function clearDangerTimer(){
 /* ---------------- ЖАУАПТЫ АШУ ---------------- */
 function revealAnswer(){
   if (gameState.answered) return;
-  const panel = $("#qPanel");
   $("#answerBox").classList.remove("hidden");
   $("#btnReveal").classList.add("hidden");
   $("#btnCorrect").classList.remove("hidden");
   $("#btnWrong").classList.remove("hidden");
   snd("reveal");
+}
+
+/* ---------------- ҚАУІПТІ ТАПСЫРМАНЫ ӨТКІЗУ (мұғалімге) ---------------- */
+async function skipDangerTask(){
+  if (gameState.answered || gameState.currentCellType !== "danger") return;
+  gameState.answered = true;
+  clearDangerTimer();
+  snd("dangerPass");
+  const team = gameState.teams[gameState.currentTeam];
+  const cell = cellEls[gameState.currentCell];
+  if (cell) cell.classList.add("good", "goodFlash");
+  showLifeToast(`⏭ Тапсырма өткізілді — ${escapeHtml(team.name)} клеткада қалды`, true);
+  await sleep(1000);
+  if (cell) setTimeout(()=> cell.classList.remove("good", "goodFlash"), 900);
+  closeQuestion();
+  gameState.busy = false;
+  nextTeam();
+  announceTurn();
 }
 
 /* ---------------- ДҰРЫС ---------------- */
@@ -606,8 +641,10 @@ async function correctAnswer(){
   const idx = gameState.currentCell;
   const cell = cellEls[idx];
 
-  // клетка жасыл жарқырайды
+  // клетка жасыл жарқырайды + тақта да жасылданады
   cell.classList.add("good", "goodFlash");
+  boardEl.classList.add("board-good");
+  setTimeout(()=> boardEl.classList.remove("board-good"), 900);
 
   if (gameState.currentCellType === "danger"){
     showLifeToast(`\u2705 ҚАУІПТЕН ӨТТІ!`);
@@ -634,12 +671,19 @@ async function wrongAnswer(){
 
   snd("wrong");
 
+  // қызыл анимация: клетка + бүкіл тақта қызарады
+  const cell = cellEls[gameState.currentCell];
+  if (cell) cell.classList.add("wrongFlash");
+  boardEl.classList.add("board-wrong");
+  setTimeout(()=> boardEl.classList.remove("board-wrong"), 900);
+
   if (gameState.currentCellType === "danger"){
     showLifeToast(`\u274C ҚАУІПТЕН ӨТЕ АЛМАДЫ!`, true);
   } else {
     showBanner(`\u274C БҰРЫС ЖАУАП!`);
   }
   await sleep(750);
+  if (cell) cell.classList.remove("wrongFlash");
 
   closeQuestion();
 
@@ -718,7 +762,6 @@ async function winGame(team){
   // тақта күңгірттенеді
   boardEl.style.filter = "brightness(.55)";
   const winnerFig = figures[team.id];
-  const rect0 = winnerFig.getBoundingClientRect();
   winnerFig.style.transition = "transform .7s ease";
   winnerFig.style.zIndex = 200;
   winnerFig.style.transform = `translate(-50%,-50%) scale(2.6)`;
@@ -738,10 +781,7 @@ async function winGame(team){
 
   confetti();
   showWinScreen(team);
-  gameOverDone();
 }
-
-function gameOverDone(){ /* финалдық экран көрсетіледі */ }
 
 function showWinScreen(team){
   const w = $("#winScreen");
@@ -839,7 +879,6 @@ function confirmRestart(){
    БАСТАПҚЫ ІСКЕ ҚОСУ
    ============================================================ */
 function init(){
-  els = {};
   document.documentElement.style.setProperty("--s", "800px");
 
   // алғашқы splash
@@ -854,6 +893,7 @@ function init(){
   $("#btnRestartWin").addEventListener("click", restartGame);
   $("#btnConfirmYes").addEventListener("click", restartGame);
   $("#btnConfirmNo").addEventListener("click", () => $("#confirmModal").classList.add("hidden"));
+  $("#btnSkip").addEventListener("click", skipDangerTask);
 
   window.addEventListener("resize", () => {
     computeLayout();

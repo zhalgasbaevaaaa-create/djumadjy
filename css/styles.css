@@ -249,6 +249,24 @@ button{ font-family:inherit; cursor:pointer; }
 .cell.goodFlash{
   animation:goodPulse .5s ease-in-out 2;
 }
+.cell.wrongFlash{
+  animation:wrongPulse .55s ease-in-out 2;
+}
+
+/* Бүкіл тақта жарқылы */
+#board.board-wrong{ animation:boardWrong .9s ease; }
+@keyframes boardWrong{
+  0%{ box-shadow: inset 0 0 0 rgba(224,49,49,0); }
+  30%{ box-shadow: inset 0 0 90px rgba(224,49,49,.55); }
+  70%{ box-shadow: inset 0 0 50px rgba(224,49,49,.3); }
+  100%{ box-shadow: inset 0 0 0 rgba(224,49,49,0); }
+}
+#board.board-good{ animation:boardGood .9s ease; }
+@keyframes boardGood{
+  0%{ box-shadow: inset 0 0 0 rgba(46,174,103,0); }
+  30%{ box-shadow: inset 0 0 90px rgba(46,174,103,.5); }
+  100%{ box-shadow: inset 0 0 0 rgba(46,174,103,0); }
+}
 
 /* ---------- Орталық жасыл шар ---------- */
 #orb{
@@ -304,6 +322,11 @@ button{ font-family:inherit; cursor:pointer; }
 @keyframes goodPulse{
   0%{ filter:brightness(1); }
   50%{ filter:brightness(2); box-shadow:0 0 0 6px #7dffb0, 0 0 30px 10px rgba(90,255,160,.9);}
+  100%{ filter:brightness(1); }
+}
+@keyframes wrongPulse{
+  0%{ filter:brightness(1); }
+  50%{ filter:brightness(1.8); box-shadow:0 0 0 6px #ff8a7a, 0 0 30px 10px rgba(224,49,49,.95);}
   100%{ filter:brightness(1); }
 }
 
